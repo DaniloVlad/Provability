@@ -57,7 +57,8 @@ size between the generated numbers and the betting range.
 ```
 More Problems: This will still result in uneven scaling because 2^20 is not a multiple of 100.  However if
 the 20-bit number is larger than 1 000 000 (max: 1 048 576) skip it and read the next 5 bytes.
-8) When betting the house uses the next byte of the string each time until the user updates either
+
+8) When betting the house uses the next 5 bytes of the string each time until the user updates either
 the secret or IV, or the house has used up the string.
 9) Once betting is complete, the server sends the user the seed it generated in set 1
 
