@@ -17,12 +17,16 @@ rl.on('line', (answer) => {
   //format answer
   if(balance == 0) {
     balance = parseFloat(answer, 10);
-    console.log(`Balance: ${balance}`)
+    console.log(`Balance: ${balance}`);
+
     if(!isNaN(balance))
       rl.setPrompt("Enter Heads or Tails and a bet amount (space seperated)> ");
-    else balance = 0;
+    else 
+      balance = 0;
   }
   else {
+    if(answer == 'run')
+      return x.run();
     answer = answer.trim().split(" ");
     const stance = answer[0].toLowerCase();
     const amount = parseFloat(answer[1],10);
@@ -33,7 +37,6 @@ rl.on('line', (answer) => {
         case 'quit': break;
         case 'tails': x = x.place(TAILS); break;
         case 'heads': x = x.place(HEADS); break;
-        case 'run': x.run(); break;
       }
       const result = x.bets[0 || x.bets.length-1]
       if(result.win) balance += amount*2

@@ -86,7 +86,7 @@ const GameInit = (salt, iv=null) => {
   this.run = (index = this.bets.length) => {
     for(let b=index; b<this.betString.bets.length; b+=5) {
       const stance = Math.floor(Math.random()*2); //[0, 1]
-      let win = placeBet(stance, this.betString.bets[b], b)
+      let win = placeBet(stance, this.betString.bets.substring(b, b+5))
       this.bets.push({stance: stance == HEADS ? "heads" : "tails", win: win.bet, outcome: win.roll})
       if(win.bet) 
         this.cwin += 1;

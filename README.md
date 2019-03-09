@@ -50,8 +50,11 @@ Heres the model:
 ```
 7) Why 2^20? Because the generated bet string will be digested in hex, 5chars*4 bits/chars= 20 bits.
 You could as easily of used 1 byte/8 bits and the range would be [0..255].  The problem being the step
-size between the generated numbers and the betting range. 0=>0, 1=> 0.392, 2=>0.784, ... , 255=> 100.
-To ensure an even distribution use larger numbers, ie: 0=>0, 1=> 0.0000954, 2=> 0.0001907, ... , 2^20=> 100 
+size between the generated numbers and the betting range.
+```
+  For 8-bits: 0=>0, 1=> 0.392, 2=>0.784, ... , 255=> 100.
+  For 20-bits: 0=>0, 1=> 0.0000954, 2=> 0.0001907, ... , 2^20=> 100 
+```
 More Problems: Yes this may seem like a fair way of doing things, and it is, but there is still the posibility
 this isn't even. Consider how 32-bit floating point numbers can only be percise to 6 sig digs. Hence smaller
 numbering systems are avoided due to their lack of percision.
