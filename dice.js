@@ -17,23 +17,24 @@ const genServerSeed = (callback) => {
   var seed;
   if(callback) {
     crypto.randomBytes(32, callback)
-  } else {
+  } 
+  else {
     seed = crypto.randomBytes(32);
     return seed
   }
 }
 
 const genBetSig = (key, salt, iv, callback) => {
-  //return object
-  const res = {bets: "", sig: ""};
   let cipher;
+  let res = {bets: "", sig: ""};
+
   if(key && salt && iv && typeof iv !== 'function') 
     cipher = aes256(key, salt, iv);
   else 
     cipher = aes256(key, salt)
   
   hmac = crypto.createHmac("sha256", salt);
-  //leave as buffer
+
   res.bets = hmac.update(cipher).digest('hex');
   //convert bet string to hex for consistent types
   res.sig = crypto.createHash("sha256").update(res.bets).digest("hex");
@@ -48,8 +49,10 @@ const placeBet = (bet, bstring) => {
   //bet logic here
   //use betstring to generate roll
   const roll = parseInt(bstring,16);
-  console.log('HEX: '+bstring);
-  console.log('Decimal: '+roll);
+
+  console.log('HEX: ' + bstring);
+  console.log('Decimal: ' + roll);
+
   const scale = ((100 * roll) / (Math.pow(2, 20)-1)); //scale to [0, 100]
   return {bet: bet == HEADS ? scale < 49.50 : scale > 50.50, roll: scale}
 
@@ -59,7 +62,8 @@ const verify = (serverSeed, salt, iv, signature, callback) => {
   //you had the salt, signature, and just got the server seed
   let cipher;
   //this step is to ensure the server isnt using known hashes
-  if(serverSeed && salt && iv && signature && signature !== 'function') cipher = aes256(serverSeed, salt, iv);
+  if(serverSeed && salt && iv && signature && signature !== 'function') 
+    cipher = aes256(serverSeed, salt, iv);
   else {
     //still server seed should not actually be used for the betting only to generate the bets
     cipher = aes256(serverSeed, salt);
@@ -84,10 +88,11 @@ const GameInit = (salt, iv=null) => {
   this.bets = [];
   //for testing
   this.run = (index = this.bets.length) => {
-    for(let b=index; b<this.betString.bets.length; b+=5) {
-      const stance = Math.floor(Math.random()*2); //[0, 1]
-      let win = placeBet(stance, this.betString.bets.substring(b, b+5))
-      this.bets.push({stance: stance == HEADS ? "heads" : "tails", win: win.bet, outcome: win.roll})
+    for(let b = index; b < this.betString.bets.length; b += 5) {
+      const stance = Math.floor(Math.random() * 2); //[0, 1]
+      let win = placeBet(stance, this.betString.bets.substring(b, b + 5));
+      this.bets.push({stance: stance == HEADS ? "heads" : "tails", win: win.bet, outcome: win.roll});
+
       if(win.bet) 
         this.cwin += 1;
       else 
@@ -100,14 +105,18 @@ const GameInit = (salt, iv=null) => {
   };
   //place bet
   this.place = (stance) => {
-    const index = this.bets.length*5;
+    const index = this.bets.length * 5;
+
     if(index >= MAXBETS) 
       return GameInit(crypto.randomBytes(32)).place(stance);
+    
     else {
-      let win = placeBet(stance, this.betString.bets.substring(index, index+5));
+      let win = placeBet(stance, this.betString.bets.substring(index, index + 5));
       this.bets.push({stance: stance == HEADS ? "heads" : "tails", win: win.bet, outcome: win.roll})
-      if(win.bet) this.cwin += 1;
-      else this.lwin += 1;
+      if(win.bet) 
+        this.cwin += 1;
+      else 
+        this.lwin += 1;
     }
     return this;
   };

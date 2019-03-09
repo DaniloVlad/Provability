@@ -55,9 +55,8 @@ size between the generated numbers and the betting range.
   For 8-bits: 0=>0, 1=> 0.392, 2=>0.784, ... , 255=> 100.
   For 20-bits: 0=>0, 1=> 0.0000954, 2=> 0.0001907, ... , 2^20=> 100 
 ```
-More Problems: Yes this may seem like a fair way of doing things, and it is, but there is still the posibility
-this isn't even. Consider how 32-bit floating point numbers can only be percise to 6 sig digs. Hence smaller
-numbering systems are avoided due to their lack of percision.
+More Problems: This will still result in uneven scaling because 2^20 is not a multiple of 100.  However if
+the 20-bit number is larger than 1 000 000 (max: 1 048 576) skip it and read the next 5 bytes.
 8) When betting the house uses the next byte of the string each time until the user updates either
 the secret or IV, or the house has used up the string.
 9) Once betting is complete, the server sends the user the seed it generated in set 1
