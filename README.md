@@ -48,8 +48,8 @@ Heres the model:
   [a, b] scaledRange = [0, 100]
   scale(x) = (((b - a) * (x - min)) / (max-min)) + a
 ```
-7) Why 2^20? Because the generated bet string will be digested in hex, 5chars*4 bits/chars= 20 bits.
-You could as easily of used 1 byte/8 bits and the range would be [0..255].  The problem being the step
+7) Why 2^20? We use 5 characters from the server seed, 5 chars * 4 bits/chars = 20 bits.
+You could as easily of used 1 byte and the range would be [0..255].  The problem being the step
 size between the generated numbers and the betting range.
 ```
   For 8-bits: 0=>0, 1=> 0.392, 2=>0.784, ... , 255=> 100.
@@ -60,7 +60,7 @@ More Problems: This will still result in uneven scaling because 2^20 is not a mu
 the 20-bit number is larger than 1 000 000 (max: 1 048 576) skip it and read the next 5 bytes.  This
 would also change how you scale you would just divide by 1000. 
 
-8) When betting the house uses the next 5 bytes of the string each time until the user updates either
+8) When betting the house uses the next 20-bits of the string each time until the user updates either
 the secret or IV, or the house has used up the string.
 9) Once betting is complete, the server sends the user the seed & key it generated in set 1
 
