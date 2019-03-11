@@ -37,8 +37,8 @@ Heres the model:
 4) Server:
 ```  
   IV = randVector
-  serverSeed =  IV ? aes256(data=serverSeed, password=key, iv=IV) : aes256(key=serverSeed, password=key)
-  BetString = sha256(key = serverSeed, salt=secretKey)
+  serverSeed =  IV ? aes256(data = serverSeed, password = secretKey, iv = IV) : aes256(key = serverSeed, password = secretKey)
+  BetString = sha256(key = serverSeed, salt = salt)
   sig = sha256(BetString)
 ```
 5) After this the server sends the user the SIG and uses the bytes in BetString to generate bets
@@ -46,7 +46,7 @@ Heres the model:
 ```
   [min, max] roll = [0, 2^20-1]
   [a, b] scaledRange = [0, 100]
-  scale(x) = (((b-a)*(x-min))/(max-min)) + a
+  scale(x) = (((b - a) * (x - min)) / (max-min)) + a
 ```
 7) Why 2^20? Because the generated bet string will be digested in hex, 5chars*4 bits/chars= 20 bits.
 You could as easily of used 1 byte/8 bits and the range would be [0..255].  The problem being the step
@@ -55,9 +55,10 @@ size between the generated numbers and the betting range.
   For 8-bits: 0=>0, 1=> 0.392, 2=>0.784, ... , 255=> 100.
   For 20-bits: 0=>0, 1=> 0.0000954, 2=> 0.0001907, ... , 2^20=> 100 
 ```
+
 More Problems: This will still result in uneven scaling because 2^20 is not a multiple of 100.  However if
 the 20-bit number is larger than 1 000 000 (max: 1 048 576) skip it and read the next 5 bytes.  This
-would also change how you scale you would just divide by 1000.
+would also change how you scale you would just divide by 1000. 
 
 8) When betting the house uses the next 5 bytes of the string each time until the user updates either
 the secret or IV, or the house has used up the string.
@@ -70,7 +71,7 @@ Verifying bets
 2) Follow step 4 from above to generate the BetString and SIG
 3) Compare SIGS
 4) Proceed to check the BetString for each bet.
-5) Now implemented, see below! 
+5) see below! 
 
 Sample Output
 -------------
@@ -156,8 +157,6 @@ Wins: 8 Loses: 3
 Balance: 60
 Enter Heads (under 49.50) or Tails (over 50.50) and a bet amount (ie: Heads 10)> 
 Thanks for playing!
-
-
 ```
 
 Output of run:
