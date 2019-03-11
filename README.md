@@ -58,7 +58,7 @@ size between the generated numbers and the betting range.
 
 More Problems: This will still result in uneven scaling because 2^20 is not a multiple of 100.  However if
 the 20-bit number is larger than 1 000 000 (max: 1 048 576) skip it and read the next 5 bytes.  This
-would also change how you scale you would just divide by 1000. 
+would also change how you scale you would just divide by 10 000. 
 
 8) When betting the house uses the next 20-bits of the string each time until the user updates either
 the secret or IV, or the house has used up the string.
