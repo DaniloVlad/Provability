@@ -31,13 +31,13 @@ Coin Implementation
 -------------
 
 Heres the model:
-1) Generate the server seed, which is kept secret (256-bits)
+1) Generate the server seed & salt, which is kept secret (256-bits & 128 - bit)
 2) User | Server generates secret key which both have a copy of (not so secret) (128 - bits)
-3) OPTIONAL: user generates and submits randomization vector/IV
+3) OPTIONAL: user generates and submits randomization vector/IV (should be done)
 4) Server:
 ```  
   IV = randVector
-  serverSeed =  IV ? aes256(key=serverSeed, password=salt, iv=IV) : aes256(key=serverSeed, password=salt)
+  serverSeed =  IV ? aes256(data=serverSeed, password=key, iv=IV) : aes256(key=serverSeed, password=key)
   BetString = sha256(key = serverSeed, salt=secretKey)
   sig = sha256(BetString)
 ```
@@ -61,7 +61,7 @@ would also change how you scale you would just divide by 1000.
 
 8) When betting the house uses the next 5 bytes of the string each time until the user updates either
 the secret or IV, or the house has used up the string.
-9) Once betting is complete, the server sends the user the seed it generated in set 1
+9) Once betting is complete, the server sends the user the seed & key it generated in set 1
 
 
 Verifying bets
@@ -70,82 +70,163 @@ Verifying bets
 2) Follow step 4 from above to generate the BetString and SIG
 3) Compare SIGS
 4) Proceed to check the BetString for each bet.
+5) Now implemented, see below! 
 
 Sample Output
 -------------
 Output of normal play: 
 ```
-node index
+Server gave signature: 5218a6254e04978f6b63cdde193e493b70038372627451371f84df3e0aa56be2
 Initial Balance > 1000
 Balance: 1000
-Enter Heads or Tails and a bet amount (ie: Heads 10)> heads 10
-HEX: 94d97
-Decimal: 609687
-Position: under 49.50/heads, Amount: 10, Result: 58.14433874544024
-Wins: 0, Loses: 1, Balance: 990
-Enter Heads or Tails and a bet amount (ie: Heads 10)> heads 10
-HEX: 8207f
-Decimal: 532607
-Position: under 49.50/heads, Amount: 10, Result: 50.79341010418902
-Wins: 0, Loses: 2, Balance: 980
-Enter Heads or Tails and a bet amount (ie: Heads 10)> heads 100
-HEX: e5fda
-Decimal: 942042
-Position: under 49.50/heads, Amount: 100, Result: 89.84021171590015
-Wins: 0, Loses: 3, Balance: 880
-Enter Heads or Tails and a bet amount (ie: Heads 10)> heads 200
-HEX: 252f2
-Decimal: 152306
-Position: under 49.50/heads, Amount: 200, Result: 14.525045895620247
-Wins: 1, Loses: 3, Balance: 1080
-Enter Heads or Tails and a bet amount (ie: Heads 10)> 
+Enter Heads (under 49.50) or Tails (over 50.50) and a bet amount (ie: Heads 10)> Heads 10
+LOST: 10
+Position: heads | Roll: 56.94385237107503 0x91C6B
+Wins: 0 Loses: 1
+Balance: 990
+Enter Heads (under 49.50) or Tails (over 50.50) and a bet amount (ie: Heads 10)> Heads 10
+WON: 10
+Position: heads | Roll: 30.86703383162864 0x4F050
+Wins: 1 Loses: 1
+Balance: 1000
+Enter Heads (under 49.50) or Tails (over 50.50) and a bet amount (ie: Heads 10)> Heads 10
+WON: 10
+Position: heads | Roll: 46.589132870800846 0x7744A
+Wins: 2 Loses: 1
+Balance: 1010
+Enter Heads (under 49.50) or Tails (over 50.50) and a bet amount (ie: Heads 10)> Heads 10
+WON: 10
+Position: heads | Roll: 13.776220108242137 0x23446
+Wins: 3 Loses: 1
+Balance: 1020
+Enter Heads (under 49.50) or Tails (over 50.50) and a bet amount (ie: Heads 10)> Heads 10
+WON: 10
+Position: heads | Roll: 19.869441861574042 0x32DDA
+Wins: 4 Loses: 1
+Balance: 1030
+Enter Heads (under 49.50) or Tails (over 50.50) and a bet amount (ie: Heads 10)> Heads 10
+WON: 10
+Position: heads | Roll: 47.60346184107002 0x79DD6
+Wins: 5 Loses: 1
+Balance: 1040
+Enter Heads (under 49.50) or Tails (over 50.50) and a bet amount (ie: Heads 10)> Heads 10
+WON: 10
+Position: heads | Roll: 47.52163650668765 0x79A7C
+Wins: 6 Loses: 1
+Balance: 1050
+Enter Heads (under 49.50) or Tails (over 50.50) and a bet amount (ie: Heads 10)> Heads 10
+WON: 10
+Position: heads | Roll: 4.772190830412703 0x0C378
+Wins: 7 Loses: 1
+Balance: 1060
+Enter Heads (under 49.50) or Tails (over 50.50) and a bet amount (ie: Heads 10)> Tails 1000
+LOST: 1000
+Position: tails | Roll: 6.150251531840832 0x0FBEA
+Wins: 7 Loses: 2
+Balance: 60
+Enter Heads (under 49.50) or Tails (over 50.50) and a bet amount (ie: Heads 10)> Tails 20
+LOST: 20
+Position: tails | Roll: 50.4992966645209 0x81473
+Wins: 7 Loses: 3
+Balance: 40
+Enter Heads (under 49.50) or Tails (over 50.50) and a bet amount (ie: Heads 10)> Tails 20
+Verifying:
+	Server Seed: 9605c0a7bd7bea8829d86cb35a0fbdd61a5ef2c03980bad69b635c31795b3eb9
+	Salt: 59a88d5c7adb66d5d8709345966750bd19dd344d302d9eae30ccb641dbbc1fc2
+	IV: 1edcf8bc38278f6d53c3b33f52258246
+	Signature: 5218a6254e04978f6b63cdde193e493b70038372627451371f84df3e0aa56be2
+We generated:
+	Signature: 5218a6254e04978f6b63cdde193e493b70038372627451371f84df3e0aa56be2
+All bets:
+ [ { stance: 'heads',
+    win: false,
+    outcome: 56.94385237107503,
+    hex: '91c6b' },
+  ...
+  { stance: 'tails',
+    win: false,
+    outcome: 50.4992966645209,
+    hex: '81473' } ]
+Wins:  7  Loses:  3
+Was the server honest? yes
+Server gave signature: daa05cfa8f2ad6594486e4e717652c7a70edc0fc920902a567da06135b1db34d
+WON: 20
+Position: tails | Roll: 81.11246215101447 0xCFA5D
+Wins: 8 Loses: 3
+Balance: 60
+Enter Heads (under 49.50) or Tails (over 50.50) and a bet amount (ie: Heads 10)> 
+Thanks for playing!
+
 
 ```
 
 Output of run:
 ```
+Server gave signature: d49a0ad6612ec00dd491b8e00bc52e62fe8c22bc4dc62ef41a14056c1d15cc81
+Initial Balance > 1000
+Balance: 1000
 Enter Heads or Tails and a bet amount (ie: Heads 10)> run
-HEX: 52f2e
-Decimal: 339758
-HEX: 234a1
-Decimal: 144545
-HEX: d4c86
-Decimal: 871558
-HEX: 3ed40
-Decimal: 257344
-HEX: 4e2b9
-Decimal: 320185
-HEX: 0241b
-Decimal: 9243
-HEX: d0975
-Decimal: 854389
-HEX: e0902
-Decimal: 919810
-HEX: 35245
-Decimal: 217669
-HEX: 61c91
-Decimal: 400529
-HEX: 97b87
-Decimal: 621447
-HEX: 32018
-Decimal: 204824
-HEX: 4f7
-Decimal: 1271
+Verifying:
+	Server Seed: b06778f02a57ad5e72c6b9a8a10b796177bc2c40b55c2ca00b84e2921045b791
+	Salt: 39b48706aa496d2a7b4fa7a7fb25df7b02acc9ddd40c12b94a2d6329bd0618f2
+	IV: 9c733a129ab24984d28ce8e447e51240
+	Signature: d49a0ad6612ec00dd491b8e00bc52e62fe8c22bc4dc62ef41a14056c1d15cc81
+We generated:
+	Signature: d49a0ad6612ec00dd491b8e00bc52e62fe8c22bc4dc62ef41a14056c1d15cc81
 All bets:
- [ { stance: 'heads', win: true, outcome: 14.525045895620247 },
-  { stance: 'heads', win: true, outcome: 32.40187874019502 },
-  { stance: 'tails', win: false, outcome: 13.784898552797845 },
-  { stance: 'heads', win: false, outcome: 83.11832725365377 },
-  { stance: 'heads', win: true, outcome: 24.542259733447775 },
-  { stance: 'heads', win: true, outcome: 30.535250220537396 },
-  { stance: 'tails', win: false, outcome: 0.8814820113010514 },
-  { stance: 'heads', win: false, outcome: 81.48096225830294 },
-  { stance: 'heads', win: false, outcome: 87.72000095367522 },
-  { stance: 'tails', win: false, outcome: 20.758553274682306 },
-  { stance: 'heads', win: true, outcome: 38.19745845552297 },
-  { stance: 'tails', win: true, outcome: 59.26586081110078 },
-  { stance: 'heads', win: true, outcome: 19.53355744701142 },
-  { stance: 'heads', win: true, outcome: 0.12121212121212122 } ]
-Done betting, wins:  8  Loses:  6
+ [ { stance: 'heads',
+    win: false,
+    outcome: 65.72863171446964,
+    hex: 'a843e' },
+  { stance: 'heads',
+    win: true,
+    outcome: 24.459480723839498,
+    hex: '3e9dc' },
+  { stance: 'tails',
+    win: true,
+    outcome: 92.0291824619126,
+    hex: 'eb983' },
+  { stance: 'tails',
+    win: false,
+    outcome: 31.814128698471734,
+    hex: '5171b' },
+  { stance: 'heads',
+    win: false,
+    outcome: 55.24592899887943,
+    hex: '8d6df' },
+  { stance: 'heads',
+    win: true,
+    outcome: 13.650239610900508,
+    hex: '22f1d' },
+  { stance: 'heads',
+    win: false,
+    outcome: 51.00932217533319,
+    hex: '82957' },
+  { stance: 'heads',
+    win: false,
+    outcome: 65.29203919605179,
+    hex: 'a725c' },
+  { stance: 'heads',
+    win: true,
+    outcome: 28.400543594878766,
+    hex: '48b49' },
+  { stance: 'tails',
+    win: false,
+    outcome: 27.850368357056006,
+    hex: '474c0' },
+  { stance: 'tails',
+    win: false,
+    outcome: 46.85043988269795,
+    hex: '77efe' },
+  { stance: 'heads',
+    win: false,
+    outcome: 90.54831557113225,
+    hex: 'e7cdb' },
+  { stance: 'heads',
+    win: true,
+    outcome: 4.688458145578523,
+    hex: 'c00a' } ]
+Wins:  5  Loses:  8
+Was the server honest? yes
 
 ```
