@@ -2,7 +2,7 @@ const crypto = require("crypto");
 
 const HEADS = 0
 const TAILS = 1
-const MAXBETS = 10 // 256 bits/bet-string / 20 bits/bet
+const MAXBETS = 10 
 
 const aes256 = (seed, key, iv) => {
   //randomize data a bit more
