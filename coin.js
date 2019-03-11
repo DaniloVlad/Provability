@@ -2,13 +2,16 @@ const crypto = require("crypto");
 
 const HEADS = 0
 const TAILS = 1
-const MAXBETS = 4
+const MAXBETS = 4 //
 
 const aes256 = (key, salt, iv) => {
   //randomize data a bit more
-  //dont rely on the company for true random number generation. Prevent pre-image attacks
+  //dont rely on the company for true random number generation. 
+  //Prevent pre-image attacks
   let cipher = crypto.createCipher("aes256", salt);
-  if(iv) cipher = crypto.createCipheriv("aes256", salt, iv);
+  if(iv) 
+    cipher = crypto.createCipheriv("aes256", salt, iv);
+
   return cipher.update(key).toString("hex")
 }
 
@@ -24,103 +27,86 @@ const genServerSeed = (callback) => {
   }
 }
 
-const genBetSig = (key, salt, iv, callback) => {
-  let cipher;
-  let res = {bets: "", sig: ""};
-
-  if(key && salt && iv && typeof iv !== 'function') 
-    cipher = aes256(key, salt, iv);
-  else 
-    cipher = aes256(key, salt)
-  
+const genBetSig = (key, salt, iv) => {
+  let cipher, sig, bets, hmac;
+  cipher = aes256(key, salt, iv);
   hmac = crypto.createHmac("sha256", salt);
+  bets = hmac.update(cipher).digest('hex');
+  sig = crypto.createHash("sha256").update(bets).digest("hex");
 
-  res.bets = hmac.update(cipher).digest('hex');
-  //convert bet string to hex for consistent types
-  res.sig = crypto.createHash("sha256").update(res.bets).digest("hex");
-
-  if(callback) 
-    callback(res)
-  else 
-    return res
+  return {bets, sig}
 }
 
 const placeBet = (bet, bstring) => {
   //bet logic here
   //use betstring to generate roll
   const roll = parseInt(bstring,16);
-
-  console.log('HEX: ' + bstring);
-  console.log('Decimal: ' + roll);
-
   const scale = ((100 * roll) / (Math.pow(2, 20)-1)); //scale to [0, 100]
-  return {bet: bet == HEADS ? scale < 49.50 : scale > 50.50, roll: scale}
+  return { 
+    bet: bet == HEADS ? scale < 49.50 : scale > 50.50, 
+    roll: scale, 
+    hex: bstring
+  }
 
 }
 
-const verify = (serverSeed, salt, iv, signature, callback) => {
+const verify = (serverSeed, salt, iv, signature) => {
+  console.log("Verifying:"+
+    "\n\tServer Seed: "+serverSeed.toString('hex')
+    +"\n\tSalt: "+salt.toString('hex')
+    +"\n\tIV: "+iv.toString('hex')
+    +"\n\tSignature: "+signature.toString('hex'));
   //you had the salt, signature, and just got the server seed
-  let cipher;
-  //this step is to ensure the server isnt using known hashes
-  if(serverSeed && salt && iv && signature && signature !== 'function') 
-    cipher = aes256(serverSeed, salt, iv);
-  else {
-    //still server seed should not actually be used for the betting only to generate the bets
-    cipher = aes256(serverSeed, salt);
-    signature = iv;
-  }
+  const cipher = aes256(serverSeed, salt, iv);
   //set up hash/hmac
   const hash = crypto.createHash("sha256")
   const hmac = crypto.createHmac("sha256", salt);
-  return hash.update(hmac.update(cipher).digest("hex")).digest("hex") === signature
+  const bets = hmac.update(cipher).digest('hex');
+  const sig = hash.update(bets).digest('hex');
+  console.log("We generated:\n\tSignature: "+sig);
+  return sig === signature;
 }
 
-const GameInit = (salt, iv=null) => {
+const GameInit = (salt = null, iv = null) => {
   this.serverSeed = genServerSeed();
   this.salt = salt || crypto.randomBytes(32);
-  this.iv = iv;
+  this.iv = iv || crypto.randomBytes(16);
   this.betString = genBetSig(this.serverSeed, this.salt, this.iv);
-
-  if(!this.salt || !this.serverSeed || !this.betString) 
-    throw new Error("not initialized...");
-  this.cwin = 0;
-  this.lwin = 0;
+  this.wins = 0;
+  this.loses = 0;
   this.bets = [];
-  //for testing
-  this.run = (index = this.bets.length) => {
+
+  if(!this.salt || !this.iv || !this.serverSeed || !this.betString) 
+    throw new Error("not initialized...");
+  
+  this.run = () => {
+    //used to test the functions automatically
+    const index = this.bets.length * 5;
     for(let b = index; b < this.betString.bets.length; b += 5) {
       const stance = Math.floor(Math.random() * 2); //[0, 1]
       let win = placeBet(stance, this.betString.bets.substring(b, b + 5));
       this.bets.push({stance: stance == HEADS ? "heads" : "tails", win: win.bet, outcome: win.roll});
-
-      if(win.bet) 
-        this.cwin += 1;
-      else 
-        this.lwin += 1;
-
+      win.bet === true ? this.cwin++ : this.lwin++;
     }
     console.log("All bets:\n", this.bets)
     console.log("Done betting, wins: ", this.cwin, " Loses: ", this.lwin)
+    var check = verify(this.serverSeed, this.salt, this.iv, this.betString.sig);
+    console.log("The server generated bets (truthfully) random: "+check);
     process.exit(0);
   };
-  //place bet
+  
   this.place = (stance) => {
+    //place bet
     const index = this.bets.length * 5;
-
     if(index >= MAXBETS) 
-      return GameInit(crypto.randomBytes(32)).place(stance);
-    
+      return GameInit().place(stance);
     else {
       let win = placeBet(stance, this.betString.bets.substring(index, index + 5));
       this.bets.push({stance: stance == HEADS ? "heads" : "tails", win: win.bet, outcome: win.roll})
-      if(win.bet) 
-        this.cwin += 1;
-      else 
-        this.lwin += 1;
+      win.bet === true ? this.cwin++ : this.lwin++;
     }
     return this;
   };
-
   return this;
 }
 
